@@ -2,11 +2,11 @@ package helper
 
 import (
 	"fmt"
-	// "./content/"
+	"go_study_2/packages/content"
 )
 
 func WriteHelper() {
 	fmt.Println("Writing from helper file")
 	WriteHelper2()
-	// content.WriteHelpertwo()
+	content.WriteHelpertwo()
 }
