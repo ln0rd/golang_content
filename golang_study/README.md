@@ -22,5 +22,16 @@ Nesse Readme haverá exemplos e explicações sobre a linguagem e como cada cois
    Para importar uma dependencia externa o comando é: `go get github.com/badoux/checkmail` <br>
    Para remover dependencias que não estão sendo usadas: `go mod tidy` <br>
 
-   1.4 **Vendor**
-   Vendor normalmente é quem disponibiliza alguma dependencia. Considere que hoje o repositório do Golang é o github, logo você corre o risco de alguem excluir algum repositorio e você perder sua dependencia, para isso você pode adotar uma estratégia como deixar as dependencias local no seu projeto executando: `go mod vendor`, isso irá criar uma pasta `vendor` com os códigos de suas dependencias.
+   1.4 **Vendor** <br>
+   Vendor normalmente é quem disponibiliza alguma dependencia. Considere que hoje o repositório do Golang é o github, logo você corre o risco de alguem excluir algum repositorio e você perder sua dependencia, para isso você pode adotar uma estratégia como deixar as dependencias local no seu projeto executando: `go mod vendor`, isso irá criar uma pasta `vendor` com os códigos de suas dependencias. <br>
+
+2. **Variáveis** <br>
+   Golang é uma linguagem fortemente tipada, de forma estática e é uma linguaguem compilada.<br>
+   Declarando Variável com tipo explicito:
+   ```
+   var name string = "varivable one"
+   ```
+   Declarando sem tipo explicito, por inferência:
+   ```
+   name := "variable two"
+   ```
