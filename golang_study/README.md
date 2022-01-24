@@ -2,7 +2,7 @@
 
 Nesse Readme haverá exemplos e explicações sobre a linguagem e como cada coisa é feita.
 
-1. **Packages**: <br>
+1. **[Packages](https://github.com/ln0rd/golang_content/tree/main/golang_study/packages)**: <br>
    Cada arquivo é separado por um package logo, a primeira linha de cada arquivo deve conter `package name-package`, para cada projeto nos temos um go.mod onde está centralizado os packages externos do seu projeto. Nessa pasta `GO_STUDY_2` havera apenas 1 go.mod para todo os exemplos. <br>
 
    Idealmente o nome do modulo do seu projeto deve seguir casando com o repositorio por exemplo nesse projeto deveria ser: `github.com/ln0rd/golang_content/go_study_2` <br>
@@ -13,7 +13,7 @@ Nesse Readme haverá exemplos e explicações sobre a linguagem e como cada cois
    Para executar o binário basta executar `./nome-do-binário`. <br>
 
    1.2 **Imports**: <br>
-   `Toda função com inicio letra maiuscula por exemplo "Write()" é a forma de dizer que a função é public, se estiver minuscula é private` <br><br>
+   `Toda função com inicio letra maiuscula por exemplo "Write()" é a forma de dizer que a função é public, se estiver minuscula é private` <br>
    Quando importar da main, você coloca o nome do modulo/package, exemplo: `import "go_study_2/packages/helper"`; <br>
    Quando importar um arquivo no mesmo nivel, basta chamar a função, ou Struct, não precisa realizar import; <br>
    Quando importar um arquivo em outro package um nivel acima você sempre importa o caminho completo começando pelo nome do seu modulo <br>
@@ -25,13 +25,32 @@ Nesse Readme haverá exemplos e explicações sobre a linguagem e como cada cois
    1.4 **Vendor** <br>
    Vendor normalmente é quem disponibiliza alguma dependencia. Considere que hoje o repositório do Golang é o github, logo você corre o risco de alguem excluir algum repositorio e você perder sua dependencia, para isso você pode adotar uma estratégia como deixar as dependencias local no seu projeto executando: `go mod vendor`, isso irá criar uma pasta `vendor` com os códigos de suas dependencias. <br>
 
-2. **Variáveis** <br>
-   Golang é uma linguagem fortemente tipada, de forma estática e é uma linguaguem compilada.<br>
+2. **[Variáveis](https://github.com/ln0rd/golang_content/tree/main/golang_study/variables)** <br>
+   Golang é uma linguagem fortemente tipada, de forma estática e é uma linguaguem compilada. <br>
    Declarando Variável com tipo explicito:
+
    ```
    var name string = "varivable one"
    ```
+
    Declarando sem tipo explicito, por inferência:
+
    ```
    name := "variable two"
+   ```
+
+3. **Tipos Básicos** <br>
+   Existem alguns alias nos tipos onde: `rune` = `int32`, `byte` = `uint8` <br>
+
+   - Inteiros: int, int8, int16, int32, int64
+   - Inteiros Positivos: uint, uint8, uint16, uint 32, uint64
+   - Reais: float32, float64
+   - Textos: string, char
+   - Booleanos: bool
+   - Erro: error
+
+   para valores float é sempre com `.`:
+
+   ```
+   var realnumber float32 = 123.50
    ```
