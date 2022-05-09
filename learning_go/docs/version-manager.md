@@ -28,6 +28,6 @@ go env GOROOT
 ```
 
 Commands
-- gobrew ls-remote # list availables go versions
-- gobrew use 1.16 # to use a specific version
-- gobrew ls # list current and installed versions
+- `gobrew ls-remote` # list availables go versions
+- `gobrew use 1.16` # to use a specific version
+- `gobrew ls` # list current and installed versions
