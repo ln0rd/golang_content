@@ -1,0 +1,43 @@
+#!/bin/bash
+
+GIT_ROOT="$(git rev-parse --show-toplevel)"
+FORCE="$1"
+
+if [ -f "$GIT_ROOT/.bootstrapped" ] && [ "$FORCE" != "--force" ]; then
+    echo "ERROR: It appears this repository has already been bootstrapped."
+    echo "       If you REALLY want to continue, please use script/bootstrap --force"
+    exit 1
+fi
+
+if [ "$FORCE" == "--force" ]; then
+    printf "\nWARNING: Forcing bootstrap. I hope you know what you're doing.\n\n"
+fi
+
+set -e
+
+echo "Writing environment file..."
+
+(cat <<-EOF
+SFTP_USERNAME=
+SFTP_PASSWORD=
+SFTP_PORT=2022
+SFTP_SERVER_KEY_FILE=id_rsa
+
+GCS_CREDENTIALS_FILE=
+GCS_BUCKET=
+
+TIVIT_USERNAME=
+TIVIT_PASSWORD=
+TIVIT_ADDRESSES=
+TIVIT_PORT=22
+TIVIT_BASE_PATH=
+KNOWN_HOSTS_FILES=/known_hosts
+EOF
+) > "$GIT_ROOT/.env"
+
+echo "Downloading go mod dependencies..."
+script/go-mod download
+
+touch "$GIT_ROOT/.bootstrapped"
+
+echo "Boostrap done! Happy hacking!"

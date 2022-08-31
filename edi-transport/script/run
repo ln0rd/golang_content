@@ -1,0 +1,20 @@
+#!/bin/bash
+
+set -e
+
+GIT_ROOT="$(git rev-parse --show-toplevel)"
+
+if [ ! -f "$GIT_ROOT/.env" ]; then
+  echo "ERROR: This script requires a .env file. Please refer to the README before continuing."
+  exit 1
+fi
+
+# Reading environments...
+set -a
+# shellcheck source=../.env
+. "$GIT_ROOT/.env"
+set +a
+
+pushd "$GIT_ROOT" > /dev/null || (echo "WTF?!"; exit 1)
+go run cmd/edi-transport/main.go server
+popd

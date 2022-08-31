@@ -1,0 +1,125 @@
+.deploy_job: &deploy_def
+  image:
+    name: $GITLAB_REGISTRY/helm_deploy:latest
+  before_script:
+  - mkdir /root/.ssh
+  - echo $SSH | base64 -d > /root/.ssh/id_rsa
+  - chmod 600 /root/.ssh/id_rsa
+  - ssh-keyscan -t rsa github.com >> /root/.ssh/known_hosts
+  - mv $TIVIT_SFTP_CONFIG_PATH edi-transport-app-config.yaml
+  - git clone --depth=1 git@github.com:????/infra.git
+
+# Prod Server deploy
+prod:tivit-sftp-server:deploy:
+  stage: Deploy
+  image: $GITLAB_REGISTRY/helm_deploy:latest
+  tags:
+    - production-cd
+  variables:
+    APP_NAME: edi-transport-server
+  <<: *deploy_def
+  script: |-
+    set -e
+    echo -e "\n#####################################################################"
+    echo -e "\n - DEPLOY $APP_NAME \n"
+    kubectl create ns $PROD_NAMESPACE 2>/dev/null || true
+    kubectl label namespace $PROD_NAMESPACE istio-injection=enabled --overwrite
+    kubectl apply -n $PROD_NAMESPACE -f tivit-sftp-app-config.yaml
+    helm template infra/charts/generic --name app \
+        --set environment=$APP_NAME-$CI_ENVIRONMENT_SLUG \
+        --set environmentType=production \
+        --set replicaCount=1 \
+        --set image.repository=gcr.io/$PROJECT_ID/$APP_NAME \
+        --set image.tag=$(git rev-parse HEAD) \
+        --set env.GOOGLE_APPLICATION_CREDENTIALS="/tmp/gcs_tivit_credentials.json" \
+        --set env.GCS_CREDENTIALS_FILE="/tmp/gcs_tivit_credentials.json" \
+        --set env.SFTP_SERVER_KEY_FILE="/tmp/tivit_id_rsa" \
+        --set env.SFTP_PORT=$SFTP_PORT \
+        --set env.ISTIO_PROXY_ENABLED="true" \
+        --set envSecrets.SFTP_USERNAME=tivit-app-config-production \
+        --set envSecrets.SFTP_PASSWORD=tivit-app-config-production \
+        --set envSecrets.GCS_BUCKET=tivit-app-config-production \
+        --set resources.limits.cpu=100m \
+        --set resources.limits.memory=128Mi \
+        --set resources.requests.cpu=10m \
+        --set resources.requests.memory=32Mi \
+        --set volume.name=secret-volume \
+        --set volume.path="/tmp" \
+        --set volume.secretName=tivit-gcp-service-accounts \
+        --set containerArgs[0]=server \
+        --set containerPorts[0].portNumber=$SFTP_PORT \
+        --set containerPorts[0].portName=tivit-sftp-port \
+        --set service.enabled=true \
+        --set service.targetPort=$SFTP_PORT \
+        --set service.port=$SFTP_PORT \
+        --set service.portName=tivit-sftp-port \
+        --set livenessProbe.typeProbe=httpGet \
+        --set livenessProbe.httpGet.path="/healthz" \
+        --set livenessProbe.httpGet.port=8001 \
+        --set livenessProbe.periodSeconds=60 \
+        --set livenessProbe.initialDelaySeconds=10 \
+        --set readinessProbe.typeProbe=httpGet \
+        --set readinessProbe.httpGet.path="/readiness" \
+        --set readinessProbe.httpGet.port=8001 \
+        --set readinessProbe.periodSeconds=60 \
+        --set readinessProbe.initialDelaySeconds=15 \
+        --set probetype=http \
+        --set probeNamespace=$PROD_NAMESPACE \
+        --set container.securityContext.readOnlyRootFilesystem=true \
+        --set ingress.enabled=true \
+        --set ingress.tcp.port=$SFTP_PORT \
+        --set ingress.gateway.hosts=$APP_NAME.$ING_DOMAIN | kubectl -n $PROD_NAMESPACE apply -f -
+    kubectl rollout status -n $PROD_NAMESPACE deployment/$APP_NAME-$CI_ENVIRONMENT_SLUG
+  environment:
+    name: production
+  only:
+    refs:
+      - tags
+  when: manual
+
+# Prod Client Scheduled deploy
+prod:tivit-sftp-client:run:
+  stage: Deploy
+  image: $GITLAB_REGISTRY/helm_deploy:latest
+  tags:
+    - production-cd
+  variables:
+    APP_NAME: edi-transport-server
+    CRONJOB_NAME: edi-transport-client-job-production
+  <<: *deploy_def
+  script: |-
+    set -e
+    echo -e "\n#####################################################################"
+    echo -e "\n - RUNNING $CRONJOB_NAME \n"
+    kubectl create ns $PROD_NAMESPACE 2>/dev/null || true
+    kubectl label namespace $PROD_NAMESPACE istio-injection=enabled --overwrite
+    kubectl apply -n $PROD_NAMESPACE -f tivit-sftp-app-config.yaml
+    kubectl delete cronjob -n $PROD_NAMESPACE $CRONJOB_NAME || true
+    helm template infra/charts/generic \
+        --set cronjob.name=$CRONJOB_NAME \
+        --set cronjob.image=gcr.io/$PROJECT_ID/$APP_NAME:$(git rev-parse HEAD) \
+        --set cronjob.schedule='0 9 * * *' \
+        --set cronjob.env.ISTIO_PROXY_ENABLED="true" \
+        --set cronjob.env.GOOGLE_APPLICATION_CREDENTIALS="/tmp/gcs_tivit_credentials.json" \
+        --set cronjob.env.GCS_CREDENTIALS_FILE="/tmp/gcs_tivit_credentials.json" \
+        --set cronjob.env.SFTP_SERVER_KEY_FILE="/tmp/tivit_id_rsa" \
+        --set cronjob.envSecrets.TIVIT_ADDRESSES=tivit-app-config-production \
+        --set cronjob.envSecrets.TIVIT_PORT=tivit-app-config-production \
+        --set cronjob.envSecrets.TIVIT_USERNAME=tivit-app-config-production \
+        --set cronjob.envSecrets.TIVIT_PASSWORD=tivit-app-config-production \
+        --set cronjob.envSecrets.TIVIT_BASE_PATH=tivit-app-config-production \
+        --set cronjob.envSecrets.GCS_BUCKET=tivit-app-config-production \
+        --set cronjob.volume.name=secret-volume \
+        --set cronjob.volume.path="/tmp" \
+        --set cronjob.volume.secretName=tivit-gcp-service-accounts \
+        --set logoutput.enabled=false \
+        --set cronjob.containerArgs[0]=client \
+        --set cronjob.resources.limits.cpu=100m \
+        --set cronjob.resources.limits.memory=128Mi \
+        --set cronjob.resources.requests.cpu=10m \
+        --set cronjob.resources.requests.memory=32Mi \
+        --set cronjob.container.securityContext.readOnlyRootFilesystem=true | kubectl -n $PROD_NAMESPACE apply -f -
+  only:
+    refs:
+      - tags
+  when: manual

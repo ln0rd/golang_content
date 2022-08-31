@@ -1,0 +1,9 @@
+.github
+.git
+.golangci-lint
+.migrate-*
+.go-oif
+count.out
+coverage.html
+.env
+migrate.*
